@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Interfaz gráfica BDAutos: ventanas, colores, paneles y botones.
+
+Ejecución: python Interfaz_BDAutos.py
+Coloca Logica_BDAutos.py en la misma carpeta.
+"""
 
 import copy
 import os
@@ -8,6 +15,7 @@ from tkinter import ttk
 
 from Logica_BDAutos import LogicaAutos, LogicaCrearConsulta, codigo_mongodb
 
+# Paleta: conserva el rojo y los paneles blancos, con acentos ciruela.
 ROJO = "#B64D54"
 ROJO_OSCURO = "#963B45"
 AZUL = "#62374D"
@@ -83,6 +91,7 @@ class BarraVisual(tk.Canvas):
         self.contenido.yview_moveto(proporcion)
 
 class CrearConsulta(LogicaCrearConsulta, tk.Toplevel):
+    """Ventana para crear una nueva consulta."""
 
     def __init__(self, app):
         super().__init__(app.raiz)
@@ -103,8 +112,34 @@ class CrearConsulta(LogicaCrearConsulta, tk.Toplevel):
             font=(FUENTE, 26, "bold"), anchor="w"
         ).pack(fill="x", padx=34, pady=(26, 0))
 
+        # Barra de acciones fija: nunca queda oculta debajo del editor JSON.
+        barra_acciones = tk.Frame(self, bg="#E8EAED", height=72)
+        barra_acciones.pack(side="bottom", fill="x")
+        barra_acciones.pack_propagate(False)
+
+        self.boton_agregar = tk.Button(
+            barra_acciones, text="Agregar", command=self.guardar,
+            font=(FUENTE, 11, "bold"), bg=AZUL, fg=BLANCO,
+            activebackground=AZUL_ACTIVO, activeforeground=BLANCO,
+            relief="flat", cursor="hand2", padx=30, pady=10, bd=0
+        )
+        self.boton_agregar.pack(side="right", padx=(0, 26), pady=14)
+        tk.Button(
+            barra_acciones, text="Cancelar", command=self.destroy,
+            font=(FUENTE, 10, "bold"), bg="#DDE0E4", fg="#4C5866",
+            activebackground="#CBD0D6", activeforeground="#4C5866",
+            relief="flat", cursor="hand2", padx=18, pady=10, bd=0
+        ).pack(side="right", padx=(0, 12), pady=14)
+
+        # Se reserva para mostrar errores; no ocupa espacio con mensajes de relleno.
+        self.estado_dialogo = tk.Label(
+            barra_acciones, text="", bg="#E8EAED", fg="#8E2F37",
+            font=(FUENTE, 9, "bold"), anchor="w"
+        )
+        self.estado_dialogo.pack(side="left", padx=(26, 8), fill="x", expand=True)
+
         contenedor = tk.Frame(self, bg=BLANCO, highlightbackground="#8D8D8D", highlightthickness=1)
-        contenedor.pack(fill="both", expand=True, padx=26, pady=24)
+        contenedor.pack(fill="both", expand=True, padx=26, pady=(24, 10))
 
         formulario = tk.Frame(contenedor, bg=BLANCO)
         formulario.pack(fill="both", expand=True, padx=34, pady=28)
@@ -164,44 +199,19 @@ class CrearConsulta(LogicaCrearConsulta, tk.Toplevel):
         self.json_editor.pack(side="left", fill="both", expand=True)
         self.json_editor.insert("1.0", "[\n  {\"$match\": {\"especificaciones.year\": {\"$gte\": 2024}}},\n  {\"$limit\": 10}\n]")
 
-        pie = tk.Frame(formulario, bg="#F3F3F3", height=126)
-        pie.pack(fill="x", pady=(16, 0))
-        pie.pack_propagate(False)
-        self.estado_dialogo = tk.Label(
-            pie,
-            text="Escribe la consulta y presiona Guardar y ejecutar.",
-            bg=ROJO, fg=BLANCO, justify="left", anchor="center",
-            font=(FUENTE, 10, "bold"), padx=22, pady=12
-        )
-        self.estado_dialogo.pack(side="right", padx=28, pady=24)
-
-        acciones = tk.Frame(formulario, bg=BLANCO)
-        acciones.pack(fill="x", pady=(14, 0))
-        tk.Button(
-            acciones, text="Cancelar", command=self.destroy,
-            font=(FUENTE, 10, "bold"), bg="#EAECEF", fg="#4C5866",
-            activebackground="#DDE2E8", activeforeground="#4C5866",
-            relief="flat", cursor="hand2", padx=18, pady=10
-        ).pack(side="right", padx=(12, 0))
-        tk.Button(
-            acciones, text="Guardar y ejecutar", command=self.guardar,
-            font=(FUENTE, 10, "bold"), bg=AZUL, fg=BLANCO,
-            activebackground=AZUL_ACTIVO, activeforeground=BLANCO,
-            relief="flat", cursor="hand2", padx=22, pady=10
-        ).pack(side="right")
-
         self.bind("<Escape>", lambda _: self.destroy())
         self.nombre.focus_set()
 
     def _mensaje_estado(self, texto, error=False):
         self.estado_dialogo.configure(
             text=texto,
-            bg="#A5484E" if not error else "#8E2F37",
-            fg=BLANCO
+            bg="#E8EAED",
+            fg="#8E2F37" if error else "#426E50"
         )
 
 
 class AplicacionAutos(LogicaAutos):
+    """Vista principal del explorador."""
 
     def __init__(self, raiz):
         self.raiz = raiz
